@@ -33,15 +33,22 @@ func init()  {
     
 }
 
-//NewProtocol create Protocol
-func NewProtocol(id int32) *Protocol {
+func NewPBPacket(id int32) interface{} {
     packet, ok := packetMap[id];
     if !ok {
         return nil;
     }
+    ms, _ := packet.(proto.Message);
+    
+    return proto.Clone(ms)
+}
+
+//NewProtocol create Protocol
+func NewProtocol(id int32) *Protocol {
+
     protocol := new(Protocol);
     protocol.ID = id;
-    protocol.Packet = packet;
+    protocol.Packet = NewPBPacket(id);
     
     return protocol;
 }
@@ -78,14 +85,14 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
         return 0, fmt.Errorf("Packet Id UnMarshal Error");
     }
     
-    packet, ok := packetMap[protocol.ID]
-    protocol.Packet = packet
+    protocol.Packet = NewPBPacket(protocol.ID)
     
-    if !ok {
-        return -1, fmt.Errorf("Invalid packetId, need Close client???")
+    if nil == protocol.Packet {
+        return -1, fmt.Errorf("Invalid packetId, need Close client??? id = %d, data = %v", protocol.ID, data)
     }
     
     ms, _ := protocol.Packet.(proto.Message);
+    
 
     err = proto.Unmarshal(packSplit, ms)
     
@@ -93,7 +100,10 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
         return 0, fmt.Errorf("PBMessage Unmarshal Error!!! incomplete packet or need close client")
     }
     
-    packetLen := proto.Size(ms) + 4
+    msLen := proto.Size(ms)
+
+    packetLen := msLen + 4
+
     return packetLen, nil
 }
 
