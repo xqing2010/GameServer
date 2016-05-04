@@ -8,9 +8,13 @@ import (
     "fmt"
 )
 
+//ProtoID Protocol id type
+type ProtoID uint32
 const (
     LoginID = iota;
 )
+
+type ProtoType uint32
 
 const (
     PT_Login = iota;
@@ -27,18 +31,20 @@ type ProtocolInterface interface {
 
 //Protocol protocol 
 type Protocol struct {
-    ID int32;
+    ID ProtoID;
+    PType ProtoType;
     Packet interface{}
 }
 
-var packetMap map[int32]interface{}
+var packetMap map[ProtoID]interface{}
 
 func init()  {
-    packetMap = make(map[int32]interface{})
+    packetMap = make(map[ProtoID]interface{})
     packetMap[LoginID] = new(PBProto.Login);   
 }
+
 //NewPBPacket create PBMessage by id  the only way to create Packet!!!
-func NewPBPacket(id int32) interface{} {
+func NewPBPacket(id ProtoID) interface{} {
     packet, ok := packetMap[id];
     if !ok {
         return nil;
@@ -49,8 +55,7 @@ func NewPBPacket(id int32) interface{} {
 }
 
 //NewProtocol create Protocol
-func NewProtocol(id int32) *Protocol {
-
+func NewProtocol(id ProtoID) *Protocol {
     protocol := new(Protocol);
     protocol.ID = id;
     protocol.Packet = NewPBPacket(id);
@@ -58,12 +63,11 @@ func NewProtocol(id int32) *Protocol {
     return protocol;
 }
 
-
-
 //Marshal convert the protocol to bytes
 func (protocol *Protocol)Marshal() ([]byte, error) {
     buff := new(bytes.Buffer);
     binary.Write(buff, binary.BigEndian, protocol.ID);
+    binary.Write(buff, binary.BigEndian, protocol.PType)
     ms, ok := protocol.Packet.(proto.Message);
     if !ok {
 		return nil, fmt.Errorf("Protocol error not valid protobuff");
@@ -78,19 +82,17 @@ func (protocol *Protocol)Marshal() ([]byte, error) {
 
 //UnMarshal Protocol's Unmarshal UnSerialize protocol from bytes
 func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
-    if(len(data) < 4) {
+    if(len(data) < 8) {
         //不完整的数据 待下次再读
         return 0, fmt.Errorf("incomplete data"); 
     }
     
     idSplit := data[:4]
-    packSplit := data[4:]
+    ptypeSplit := data[4:8]
+    packSplit := data[8:]
     
-    buf := bytes.NewReader(idSplit);
-    err := binary.Read(buf, binary.LittleEndian, &protocol.ID);
-    if nil != err {
-        return 0, fmt.Errorf("Packet Id UnMarshal Error");
-    }
+    protocol.ID = ProtoID(binary.LittleEndian.Uint32(idSplit))
+    protocol.PType = ProtoType(binary.LittleEndian.Uint32(ptypeSplit))
     
     protocol.Packet = NewPBPacket(protocol.ID)
     
@@ -101,7 +103,7 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     ms, _ := protocol.Packet.(proto.Message);
     
 
-    err = proto.Unmarshal(packSplit, ms)
+    err := proto.Unmarshal(packSplit, ms)
     
     if nil != err {
         return 0, fmt.Errorf("PBMessage Unmarshal Error!!! incomplete packet or need close client")

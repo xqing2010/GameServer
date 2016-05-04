@@ -4,6 +4,7 @@ import (
     "net"
     "log"
     "GameServer/Common/Network"
+    "GameServer/GateServer/Handler"
 )
 
 var sessionMap map[int]*Network.Session;
@@ -14,9 +15,11 @@ func main() {
     if nil != err {
         log.Fatalln(err);
     }
-    
-    sessionMap = make(map[int]*Network.Session);
     count := 0;
+    sessionMap = make(map[int]*Network.Session);
+    
+    Network.SetProtocolHandler(Handler.ProtocolHandler)
+    
     for {
         conn, err := listner.Accept();
         if nil != err {

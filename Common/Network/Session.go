@@ -20,6 +20,7 @@ const (
     RECVBUFFSIZE = 1024 * 64
 )
 var protocolHandler func (*Session, *Protocol);
+var sessionIDGen *Util.IDGenerator;
 
 //Session : net connection.
 type Session struct {
@@ -33,10 +34,13 @@ type Session struct {
 	OnSessionClose func(session *Session)
 }
 
+func init()  {
+	sessionIDGen = new(Util.IDGenerator)
+}
 //NewSession :Create new Session.
 func NewSession(conn net.Conn, onClose func(session *Session)) (*Session, error) {
 	session := new(Session)
-	session.ID = Util.GetUniqID()
+	session.ID = sessionIDGen.GetUniqID()
 	session.conn = conn
 
 	session.sPacketBuff = make(chan interface{}, MAXSENDNUM)
