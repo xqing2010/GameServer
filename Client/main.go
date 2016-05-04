@@ -14,6 +14,10 @@ func init()  {
     exitCh = make(chan struct{})
 }
 
+func ProtocolHandler(session *Network.Session, protocol *Network.Protocol)  {
+    session.SendPacket(protocol)
+}
+
 func sendPacket(session *Network.Session) {
         packet := &PBProto.Login{
             Name : "test",
@@ -33,6 +37,7 @@ func onSessionClose(session *Network.Session)  {
 }
     
 func main()  {
+    Network.SetProtocolHandler(ProtocolHandler)
     for i := 0; i < maxConnects; i++ {
         conn, err := net.Dial("tcp", "127.0.0.1:9999")
         if nil != err {

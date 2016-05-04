@@ -14,6 +14,11 @@ const (
     LoginID = iota;
 )
 
+const (
+    IDEnd = 4;
+    TypeEnd = 8;
+)
+
 type ProtoType uint32
 
 const (
@@ -82,14 +87,14 @@ func (protocol *Protocol)Marshal() ([]byte, error) {
 
 //UnMarshal Protocol's Unmarshal UnSerialize protocol from bytes
 func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
-    if(len(data) < 8) {
+    if(len(data) < TypeEnd) {
         //不完整的数据 待下次再读
         return 0, fmt.Errorf("incomplete data"); 
     }
     
-    idSplit := data[:4]
-    ptypeSplit := data[4:8]
-    packSplit := data[8:]
+    idSplit := data[:IDEnd]
+    ptypeSplit := data[IDEnd:TypeEnd]
+    packSplit := data[TypeEnd:]
     
     protocol.ID = ProtoID(binary.LittleEndian.Uint32(idSplit))
     protocol.PType = ProtoType(binary.LittleEndian.Uint32(ptypeSplit))
@@ -101,7 +106,6 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     }
     
     ms, _ := protocol.Packet.(proto.Message);
-    
 
     err := proto.Unmarshal(packSplit, ms)
     
@@ -111,7 +115,7 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     
     msLen := proto.Size(ms)
 
-    packetLen := msLen + 4
+    packetLen := msLen + TypeEnd
 
     return packetLen, nil
 }
