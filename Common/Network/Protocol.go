@@ -10,7 +10,13 @@ import (
 
 const (
     LoginID = iota;
+)
 
+const (
+    PT_Login = iota;
+    PT_ServerCenter;
+    PT_GameSever;
+    PT_GlobalServer;
 )
 
 //ProtocolInterface protocol interface
@@ -29,10 +35,9 @@ var packetMap map[int32]interface{}
 
 func init()  {
     packetMap = make(map[int32]interface{})
-    packetMap[LoginID] = new(PBProto.Login);
-    
+    packetMap[LoginID] = new(PBProto.Login);   
 }
-
+//NewPBPacket create PBMessage by id  the only way to create Packet!!!
 func NewPBPacket(id int32) interface{} {
     packet, ok := packetMap[id];
     if !ok {
@@ -52,6 +57,8 @@ func NewProtocol(id int32) *Protocol {
     
     return protocol;
 }
+
+
 
 //Marshal convert the protocol to bytes
 func (protocol *Protocol)Marshal() ([]byte, error) {
@@ -73,7 +80,7 @@ func (protocol *Protocol)Marshal() ([]byte, error) {
 func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     if(len(data) < 4) {
         //不完整的数据 待下次再读
-        return 0, fmt.Errorf("incomplete data."); 
+        return 0, fmt.Errorf("incomplete data"); 
     }
     
     idSplit := data[:4]

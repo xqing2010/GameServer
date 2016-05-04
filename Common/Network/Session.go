@@ -19,6 +19,7 @@ const (
 	SENDBUFFSIZE = 1024 * 64
     RECVBUFFSIZE = 1024 * 64
 )
+var protocolHandler func (*Session, *Protocol);
 
 //Session : net connection.
 type Session struct {
@@ -46,6 +47,11 @@ func NewSession(conn net.Conn, onClose func(session *Session)) (*Session, error)
 	session.OnSessionClose = onClose
     
 	return session, nil
+}
+
+//SetProtocolHandler set protocl handler 
+func SetProtocolHandler(handler func(*Session, *Protocol)) {
+    protocolHandler = handler
 }
 
 //Run loop while conn valid, process input and output
@@ -84,10 +90,9 @@ LOOP:
 					}
 					if readLen == 0 { //Incomplete protocol leave to next loop to complete recv protocol
 						goto LOOP;
-					}
-
-					session.SendPacket(protocol)
+					}					
 					buff.Next(readLen);
+					protocolHandler(session, protocol)
 				}
 			}
 			case <-session.closeCh:
