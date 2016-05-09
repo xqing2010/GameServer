@@ -106,7 +106,6 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     }
     
     ms, _ := protocol.Packet.(proto.Message);
-
     err := proto.Unmarshal(packSplit, ms)
     
     if nil != err {
@@ -116,7 +115,6 @@ func (protocol *Protocol) UnMarshal(data []byte) (int, error) {
     msLen := proto.Size(ms)
 
     packetLen := msLen + TypeEnd
-
     return packetLen, nil
 }
 

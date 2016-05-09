@@ -82,7 +82,7 @@ func (session *Session) handle() {
 LOOP:		
 		select{
 			case data := <- session.recvCh:
-			{				
+			{
 				buff.Write(data);
 				for ; buff.Len() != 0; {
 					protocol  := new(Protocol)
@@ -128,7 +128,7 @@ func (session *Session) recv() {
 }
 
 //Close close session
-func (session *Session) Close()  {
+func (session *Session) Close() {
 	//if atomic.CompareAndSwapInt32(&session.validFlag, 1, -1) {
 		session.conn.Close();
 		fmt.Printf("session close: session id = %d remote ip %s closed\n", session.ID, session.conn.RemoteAddr())		

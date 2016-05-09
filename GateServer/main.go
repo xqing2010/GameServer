@@ -20,6 +20,8 @@ func main() {
     
     Network.SetProtocolHandler(Handler.ProtocolHandler)
     
+    synCh := make(chan *Network.Session)
+    
     for {
         conn, err := listner.Accept();
         if nil != err {
@@ -27,15 +29,22 @@ func main() {
             continue;
         }
         count++
+        session, _ := Network.NewSession(conn, nil)
         go func ()  {
             log.Printf("new connection %s, connections = %d", conn.RemoteAddr().String(), count)
 
-            session, _ := Network.NewSession(conn, nil)
+            synCh <- session
             session.Run();
         }()
         
-        //sessionMap[session.ID] = session;
-        
+        select{
+            case session := <-synCh: {
+                sessionMap[session.ID] = session
+            }
+            default:{
+            }           
+        }
+
     }
 }
 

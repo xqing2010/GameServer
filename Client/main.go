@@ -14,7 +14,7 @@ func init()  {
     exitCh = make(chan struct{})
 }
 
-func ProtocolHandler(session *Network.Session, protocol *Network.Protocol)  {
+func ProtocolHandler(session *Network.Session, protocol *Network.Protocol) {
     session.SendPacket(protocol)
 }
 
@@ -28,7 +28,8 @@ func sendPacket(session *Network.Session) {
         proto.ID = Network.LoginID;
         proto.Packet = packet;
         session.SendPacket(proto);
-    }
+}
+
 func onSessionClose(session *Network.Session)  {
     atomic.AddInt32(&closeNum, 1)
     if int(closeNum) == maxConnects {
@@ -42,7 +43,7 @@ func main()  {
         conn, err := net.Dial("tcp", "127.0.0.1:9999")
         if nil != err {
             fmt.Println("connect remote error : " + err.Error())
-            return
+            continue
         }
         
         session, _ := Network.NewSession(conn, onSessionClose)
