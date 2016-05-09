@@ -1,4 +1,4 @@
-package GateServer
+package Session
 
 import (
     "GameServer/Common/Network"
