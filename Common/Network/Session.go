@@ -6,6 +6,7 @@ import (
 	"time"
     "GameServer/Common/Util"
     "bytes"
+	"GameServer/Common/ConstDef"
 	//"sync/atomic"
 	//"bufio"
 )
@@ -21,6 +22,7 @@ const (
 )
 var protocolHandler func (*Session, *Protocol);
 var sessionIDGen *Util.IDGenerator;
+var netLog *Util.Logger
 
 //Session : net connection.
 type Session struct {
@@ -36,6 +38,7 @@ type Session struct {
 
 func init()  {
 	sessionIDGen = new(Util.IDGenerator)
+	netLog, _ = Util.NewLogger(ConstDef.NetLogName)
 }
 //NewSession :Create new Session.
 func NewSession(conn net.Conn, onClose func(session *Session)) (*Session, error) {
@@ -88,7 +91,7 @@ LOOP:
 					protocol  := new(Protocol)
 					readLen, err := protocol.UnMarshal(buff.Bytes())
 					if readLen < 0 { //Invalid Packet
-						fmt.Printf("handle data error: " + err.Error() + "session id = %d\n", session.ID)
+						netLog.Printf("handle data error: " + err.Error() + "session id = %d\n", session.ID)
 						session.Close();
 						goto LOOP;											 
 					}
@@ -115,7 +118,7 @@ func (session *Session) recv() {
 	for{
 		num, err := session.conn.Read(dataBuff);
 		if nil != err {
-			fmt.Println("recv error, error msg : " + err.Error())
+			netLog.Println("recv error, error msg : " + err.Error())
 			session.closeCh <- struct{}{}
 			return
 		}
@@ -131,7 +134,7 @@ func (session *Session) recv() {
 func (session *Session) Close() {
 	//if atomic.CompareAndSwapInt32(&session.validFlag, 1, -1) {
 		session.conn.Close();
-		fmt.Printf("session close: session id = %d remote ip %s closed\n", session.ID, session.conn.RemoteAddr())		
+		netLog.Printf("session close: session id = %d remote ip %s closed\n", session.ID, session.conn.RemoteAddr())		
 		if nil != session.OnSessionClose {
 			session.OnSessionClose(session)
 		}
@@ -162,7 +165,7 @@ func (session *Session) send() {
 			{
 				data, err := MarshalPacket(packet)
 				if nil != err {
-					fmt.Println("error not protobuf packet")
+					netLog.Println("error not protobuf packet")
 					continue
 				}
 				if (buff.Len() + len(data)) >= SENDBUFFSIZE {
